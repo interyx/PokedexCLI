@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/interyx/pokedexcli/commands"
 	"os"
 	"strings"
 )
@@ -14,9 +15,15 @@ func main() {
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("An error occurred while reading input")
-			return
+			continue
 		}
 		input = strings.TrimSuffix(input, "\n")
-		fmt.Println(input)
+		input = strings.ToLower(input)
+		commands := commands.GetCommands()
+		command, ok := commands[input]
+		if !ok {
+			fmt.Println("That command is not recognized.  If you need help, try 'help'.")
+		}
+		err = command.Callback()
 	}
 }

@@ -53,9 +53,11 @@ func commandExit() error {
 }
 
 func commandMap() error {
+	fmt.Println("This is where the map goes.")
 	return nil
 }
 
 func commandMapb() error {
+	fmt.Println("Previous maps go here")
 	return nil
 }

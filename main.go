@@ -14,7 +14,7 @@ func main() {
 		reader := bufio.NewReader(os.Stdin)
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("An error occurred while reading input")
+			fmt.Println("An error occurred while reading input: %w", err)
 			continue
 		}
 		input = strings.TrimSuffix(input, "\n")
@@ -24,6 +24,8 @@ func main() {
 		if !ok {
 			fmt.Println("That command is not recognized.  If you need help, try 'help'.")
 		}
-		err = command.Callback()
+		if err = command.Callback(); err != nil {
+			fmt.Println("An error has occurred: %w", err)
+		}
 	}
 }

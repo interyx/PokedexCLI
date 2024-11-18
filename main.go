@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	cfg := commands.Config{}
 	for {
 		fmt.Print("pokedex > ")
 		reader := bufio.NewReader(os.Stdin)
@@ -24,7 +25,7 @@ func main() {
 		if !ok {
 			fmt.Println("That command is not recognized.  If you need help, try 'help'.")
 		}
-		if err = command.Callback(); err != nil {
+		if err = command.Callback(&cfg); err != nil {
 			fmt.Println("An error has occurred: %w", err)
 		}
 	}

@@ -1,52 +1,21 @@
 package commands
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"log"
-	"net/http"
 	"os"
+
+	"github.com/interyx/pokedexcli/pokeapi"
 )
+
+type Config struct {
+	Next     string
+	Previous string
+}
 
 type cliCommand struct {
 	Name        string
 	Description string
-	Callback    func() error
-}
-
-type Response struct {
-	Count    int        `json:"count"`
-	Next     string     `json:"next"`
-	Previous string     `json:"previous"`
-	Results  []Location `json:"results"`
-}
-
-type Location struct {
-	ID     int    `json:"id"`
-	Name   string `json:"name"`
-	Region struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"region"`
-	Names []struct {
-		Name     string `json:"name"`
-		Language struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"language"`
-	} `json:"names"`
-	GameIndices []struct {
-		GameIndex  int `json:"game_index"`
-		Generation struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"generation"`
-	} `json:"game_indices"`
-	Areas []struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"areas"`
+	Callback    func(cfg *Config) error
 }
 
 func GetCommands() map[string]cliCommand {
@@ -74,7 +43,7 @@ func GetCommands() map[string]cliCommand {
 	}
 }
 
-func commandHelp() error {
+func commandHelp(cfg *Config) error {
 	commands := GetCommands()
 	fmt.Println("Welcome to the Pokedex!\nUsage:")
 	fmt.Printf("\n")
@@ -85,35 +54,27 @@ func commandHelp() error {
 	return nil
 }
 
-func commandExit() error {
+func commandExit(cfg *Config) error {
 	os.Exit(0)
 	return nil
 }
 
-func commandMap() error {
-	res, err := http.Get("https://pokeapi.co/api/v2/location-area")
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	var locations Response
-	if err = json.Unmarshal(body, &locations); err != nil {
-		log.Fatal(err)
-	}
-	for _, location := range locations.Results {
+func commandMap(cfg *Config) error {
+	locations, newPrevious, newNext := pokeapi.GetNextLocation(&cfg.Next)
+	for _, location := range locations {
 		fmt.Printf("%s\n", location.Name)
 	}
+	cfg.Next = newNext
+	cfg.Previous = newPrevious
 	return nil
 }
 
-func commandMapb() error {
-	fmt.Println("Previous maps go here")
+func commandMapb(cfg *Config) error {
+	locations, newPrevious, newNext := pokeapi.GetNextLocation(&cfg.Previous)
+	cfg.Next = newNext
+	cfg.Previous = newPrevious
+	for _, location := range locations {
+		fmt.Printf("%s\n", location.Name)
+	}
 	return nil
 }

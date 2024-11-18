@@ -2,12 +2,16 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/interyx/pokedexcli/pokecache"
 	"io"
 	"log"
 	"net/http"
 )
 
-const baseURL string = "https://pokeapi.co/api/v2/"
+const baseURL string = "https://pokeapi.co/api/v2"
+
+var cache = pokecache.NewCache("5s")
 
 type Response struct {
 	Count    int        `json:"count"`
@@ -60,7 +64,16 @@ func ReadBody(url string) []byte {
 }
 
 func GetLocations(url string) ([]Location, string, string) {
-	body := ReadBody(url)
+	var body []byte
+	data, cached := cache.Get(url)
+	if !cached {
+		body = ReadBody(url)
+		fmt.Println("Cache contents:")
+		cache.Add(url, body)
+	} else {
+		body = data
+	}
+
 	var res Response
 	if err := json.Unmarshal(body, &res); err != nil {
 		log.Fatal(err)

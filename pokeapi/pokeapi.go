@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"github.com/interyx/pokedexcli/pokecache"
 	"io"
-	"log"
 	"net/http"
 )
 
-const baseURL string = "https://pokeapi.co/api/v2"
+const baseURL string = "https://pokeapi.co/api/v2/"
 
 var cache = pokecache.NewCache("5s")
 
@@ -106,7 +105,7 @@ func ReadBody(url string) ([]byte, error) {
 	if !cached {
 		res, err := http.Get(url)
 		if err != nil {
-			log.Fatal(err)
+			return []byte{}, err
 		}
 		body, err = io.ReadAll(res.Body)
 		defer res.Body.Close()
@@ -138,17 +137,20 @@ func GetLocations(url string) ([]Location, string, string, error) {
 func GetNextLocation(url *string) ([]Location, string, string, error) {
 	var target string
 	if url == nil || *url == "" {
-		target = baseURL + "/location-area"
+		target = baseURL + "location-area"
 	} else {
 		target = *url
 	}
 	return GetLocations(target)
 }
 
-func GetPokemonAtLocation(url string) ([]string, error) {
-	body := ReadBody(url)
+func GetPokemonAtLocation(area string) ([]string, error) {
+	body, err := ReadBody(baseURL + "location-area/" + area)
+	if err != nil {
+		return []string{}, err
+	}
 	var res LocationDetail
-	if err := json.Unmarshal(body, &res); err != nil {
+	if err = json.Unmarshal(body, &res); err != nil {
 		return []string{}, err
 	}
 	results := []string{}

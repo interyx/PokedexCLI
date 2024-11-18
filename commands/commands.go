@@ -94,5 +94,13 @@ func commandExplore(cfg *Config, input string) error {
 	if err != nil {
 		return err
 	}
+	if len(pokemans) > 0 {
+		fmt.Printf("Found Pokemon:\n")
+		for _, pokemon := range pokemans {
+			fmt.Printf("- %s\n", pokemon)
+		}
+	} else {
+		fmt.Println("No Pokemon found at this location.")
+	}
 	return nil
 }

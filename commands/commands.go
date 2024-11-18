@@ -2,9 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/interyx/pokedexcli/pokeapi"
+	"os"
 )
 
 type Config struct {
@@ -15,7 +14,7 @@ type Config struct {
 type cliCommand struct {
 	Name        string
 	Description string
-	Callback    func(cfg *Config) error
+	Callback    func(cfg *Config, input string) error
 }
 
 func GetCommands() map[string]cliCommand {
@@ -40,10 +39,15 @@ func GetCommands() map[string]cliCommand {
 			Description: "Display information about the previous 20 locations",
 			Callback:    commandMapb,
 		},
+		"explore": {
+			Name:        "explore <area>",
+			Description: "Explore the given area to find all the Pokemon living there\nFind area names with 'map'",
+			Callback:    commandExplore,
+		},
 	}
 }
 
-func commandHelp(cfg *Config) error {
+func commandHelp(cfg *Config, input string) error {
 	commands := GetCommands()
 	fmt.Println("Welcome to the Pokedex!\nUsage:")
 	fmt.Printf("\n")
@@ -54,13 +58,16 @@ func commandHelp(cfg *Config) error {
 	return nil
 }
 
-func commandExit(cfg *Config) error {
+func commandExit(cfg *Config, input string) error {
 	os.Exit(0)
 	return nil
 }
 
-func commandMap(cfg *Config) error {
-	locations, newPrevious, newNext := pokeapi.GetNextLocation(&cfg.Next)
+func commandMap(cfg *Config, input string) error {
+	locations, newPrevious, newNext, err := pokeapi.GetNextLocation(&cfg.Next)
+	if err != nil {
+		return err
+	}
 	for _, location := range locations {
 		fmt.Printf("%s\n", location.Name)
 	}
@@ -69,12 +76,23 @@ func commandMap(cfg *Config) error {
 	return nil
 }
 
-func commandMapb(cfg *Config) error {
-	locations, newPrevious, newNext := pokeapi.GetNextLocation(&cfg.Previous)
+func commandMapb(cfg *Config, input string) error {
+	locations, newPrevious, newNext, err := pokeapi.GetNextLocation(&cfg.Previous)
+	if err != nil {
+		return err
+	}
 	cfg.Next = newNext
 	cfg.Previous = newPrevious
 	for _, location := range locations {
 		fmt.Printf("%s\n", location.Name)
+	}
+	return nil
+}
+
+func commandExplore(cfg *Config, input string) error {
+	pokemans, err := pokeapi.GetPokemonAtLocation(input)
+	if err != nil {
+		return err
 	}
 	return nil
 }

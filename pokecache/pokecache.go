@@ -50,10 +50,10 @@ func (c Cache) reapLoop() {
 	ticker := time.NewTicker(c.interval)
 	go func() {
 		for range ticker.C {
-			for i, entry := range c.entries {
+			for key, entry := range c.entries {
 				t := time.Now()
 				if t.Sub(entry.createdAt) > c.interval {
-					delete(c.entries, i)
+					delete(c.entries, key)
 				}
 			}
 		}

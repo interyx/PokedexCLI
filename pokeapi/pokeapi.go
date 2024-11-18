@@ -2,7 +2,6 @@ package pokeapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/interyx/pokedexcli/pokecache"
 	"io"
 	"log"
@@ -13,7 +12,7 @@ const baseURL string = "https://pokeapi.co/api/v2"
 
 var cache = pokecache.NewCache("5s")
 
-type Response struct {
+type LocationResponse struct {
 	Count    int        `json:"count"`
 	Next     string     `json:"next"`
 	Previous string     `json:"previous"`
@@ -48,33 +47,31 @@ type Location struct {
 }
 
 func ReadBody(url string) []byte {
-	res, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
-	}
-	if err != nil {
-		log.Fatal(err)
+	var body []byte
+	data, cached := cache.Get(url)
+	if !cached {
+		res, err := http.Get(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		body, err = io.ReadAll(res.Body)
+		defer res.Body.Close()
+		if res.StatusCode > 299 {
+			log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		cache.Add(url, body)
+	} else {
+		body = data
 	}
 	return body
 }
 
 func GetLocations(url string) ([]Location, string, string) {
-	var body []byte
-	data, cached := cache.Get(url)
-	if !cached {
-		body = ReadBody(url)
-		fmt.Println("Cache contents:")
-		cache.Add(url, body)
-	} else {
-		body = data
-	}
-
-	var res Response
+	body := ReadBody(url)
+	var res LocationResponse
 	if err := json.Unmarshal(body, &res); err != nil {
 		log.Fatal(err)
 	}
